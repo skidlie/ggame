@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will You Be My Valentine?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #ff4d6d;
+            --secondary-color: #ff8fa3;
+            --accent-color: #a4133c; /* Darkened slightly for better text contrast */
+            --bg-gradient: linear-gradient(135deg, #fff0f3 0%, #ffccd5 100%);
+            --white: #ffffff;
+            
+            /* UPDATED FONTS */
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Cormorant Garamond', serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: var(--font-body);
+            background: var(--bg-gradient);
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* UI Layer */
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #score-board {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 25px;
+            border-radius: 50px; /* More oval for elegance */
+            box-shadow: 0 4px 20px rgba(164, 19, 60, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 1.3rem; /* Larger font */
+            letter-spacing: 1px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+        }
+
+        .progress-bar {
+            width: 150px;
+            height: 12px;
+            background: #ffe5ec;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--secondary-color);
+        }
+
+        #love-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transition: width 0.3s ease-out;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 240, 243, 0.96); /* High opacity for magazine look */
+            z-index: 20;
+            transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1); /* Smooth luxury easing */
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            display: none; 
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            display: flex;
+        }
+
+        /* TYPOGRAPHY UPDATES */
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 4.5rem; /* Large editorial size */
+            font-weight: 700;
+            font-style: italic; /* The "Love Story" look */
+            color: var(--accent-color);
+            text-shadow: none; /* Removed cheap shadow */
+            margin-bottom: 25px;
+            text-align: center;
+            line-height: 1.1;
+            padding: 0 20px;
+            letter-spacing: -1px; /* Tight editorial spacing */
+        }
+
+        p {
+            font-family: var(--font-body);
+            font-size: 1.8rem;
+            font-weight: 400;
+            font-style: italic;
+            color: #590d22;
+            margin-bottom: 40px;
+            text-align: center;
+            padding: 0 20px;
+            max-width: 800px;
+        }
+
+        .sub-text {
+            font-size: 1.5rem;
+            opacity: 0.8;
+        }
+
+        /* BUTTONS - LUXURY STYLE */
+        .btn {
+            padding: 18px 50px;
+            font-size: 1.1rem;
+            font-family: var(--font-heading); /* Serif font in buttons is very chic */
+            font-weight: 700;
+            text-transform: uppercase; /* The "Expensive Brand" look */
+            letter-spacing: 3px; /* Wide spacing */
+            border: none;
+            border-radius: 0; /* Sharp corners or very slight radius = more expensive */
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px -10px rgba(164, 19, 60, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Slight rounding for a softer feel */
+        .btn { border-radius: 4px; }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px -10px rgba(164, 19, 60, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        #start-btn {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .yes-btn {
+            background: #06d6a0; /* Keeping green but slightly richer */
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            color: white;
+            padding: 20px 70px;
+            font-size: 1.4rem;
+        }
+
+        .no-btn {
+            background: #ffb703;
+            background: linear-gradient(45deg, #f2994a, #f2c94c);
+            color: white;
+            position: relative;
+            opacity: 0.9;
+        }
+
+        /* Animations */
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            15% { transform: scale(1.05); } /* Subtler pulse for elegance */
+            30% { transform: scale(1); }
+            45% { transform: scale(1.05); }
+            60% { transform: scale(1); }
+        }
+
+        .proposal-content h1 {
+            animation: heartbeat 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui-layer">
+            <div id="score-board">
+                <span>Love Meter</span>
+                <div class="progress-bar">
+                    <div id="love-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="start-screen" class="screen active">
+            <h1>Catch the Love</h1>
+            <p>Collect enough hearts to reveal a secret question...</p>
+            <button id="start-btn" class="btn">Start Game Chudail</button>
+        </div>
+
+        <div id="proposal-screen" class="screen hidden">
+            <div class="proposal-content" style="text-align: center;">
+                <h1>Will You Be My Valentine... Chiuu?</h1>
+                <p class="sub-text">You caught my heart! Now I must ask...</p>
+                <div class="buttons">
+                    <button id="yes-btn" class="btn yes-btn">YES!</button>
+                    <button id="no-btn" class="btn no-btn">No</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="celebration-screen" class="screen hidden">
+            <h1>Happy Propose Day Aarti Madam! 💍</h1>
+            <p>I love you!</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game State
+        let gameState = 'START'; 
+        let score = 0;
+        const WIN_SCORE = 5; 
+        let player;
+        let hearts = [];
+        let particles = []; 
+        let animationId;
+        let loveMeter = document.getElementById('love-fill');
+
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const proposalScreen = document.getElementById('proposal-screen');
+        const celebrationScreen = document.getElementById('celebration-screen');
+        const startBtn = document.getElementById('start-btn');
+        const yesBtn = document.getElementById('yes-btn');
+        const noBtn = document.getElementById('no-btn');
+
+        // Resize Handling
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (player) {
+                 player.y = canvas.height - 100;
+                 if(player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+            }
+        }
+        window.addEventListener('resize', resize);
+
+        // Player Object
+        class Player {
+            constructor() {
+                this.w = 100; 
+                this.h = 80;  
+                this.x = canvas.width / 2 - this.w / 2;
+                this.y = canvas.height - 100;
+            }
+
+            draw() {
+                // Draw a cute basket
+                ctx.fillStyle = '#ff4d6d';
+                ctx.beginPath();
+                ctx.arc(this.x + this.w/2, this.y, this.w/2, 0, Math.PI, false);
+                ctx.fill();
+                
+                // Handle
+                ctx.beginPath();
+                ctx.strokeStyle = '#a4133c'; // Darker luxury red
+                ctx.lineWidth = 5;
+                ctx.arc(this.x + this.w/2, this.y - 10, this.w/2, Math.PI, 0, false);
+                ctx.stroke();
+            }
+
+            update() {
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.w > canvas.width) this.x = canvas.width - this.w;
+            }
+        }
+
+        // Heart Object
+        class Heart {
+            constructor() {
+                this.size = Math.random() * 20 + 20; 
+                this.x = Math.random() * (canvas.width - this.size);
+                this.y = -this.size;
+                this.speed = Math.random() * 3 + 2; 
+                this.color = `hsl(${Math.random() * 20 + 340}, 100%, 60%)`; 
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                let topCurveHeight = this.size * 0.3;
+                ctx.moveTo(this.x, this.y + topCurveHeight);
+                ctx.bezierCurveTo(
+                    this.x, this.y, 
+                    this.x - this.size / 2, this.y, 
+                    this.x - this.size / 2, this.y + topCurveHeight
+                );
+                ctx.bezierCurveTo(
+                    this.x - this.size / 2, this.y + (this.size + topCurveHeight) / 2, 
+                    this.x, this.y + (this.size + topCurveHeight) / 2, 
+                    this.x, this.y + this.size
+                );
+                ctx.bezierCurveTo(
+                    this.x, this.y + (this.size + topCurveHeight) / 2, 
+                    this.x + this.size / 2, this.y + (this.size + topCurveHeight) / 2, 
+                    this.x + this.size / 2, this.y + topCurveHeight
+                );
+                ctx.bezierCurveTo(
+                    this.x + this.size / 2, this.y, 
+                    this.x, this.y, 
+                    this.x, this.y + topCurveHeight
+                );
+                ctx.fill();
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+        }
+
+        // Particle Effect
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = (Math.random() - 0.5) * 4;
+                this.speedY = (Math.random() - 0.5) * 4;
+                this.life = 100;
+                this.color = `rgba(255, 255, 255, 0.8)`;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= 2;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = Math.max(0, this.life / 100);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Input Handling
+        function handleInput(e) {
+            if (!player || gameState !== 'PLAYING') return;
+            
+            let clientX;
+            if (e.type === 'mousemove') {
+                clientX = e.clientX;
+            } else if (e.type === 'touchmove') {
+                e.preventDefault(); 
+                clientX = e.touches[0].clientX;
+            }
+            
+            if (clientX) {
+                player.x = clientX - player.w / 2;
+            }
+        }
+
+        window.addEventListener('mousemove', handleInput);
+        window.addEventListener('touchmove', handleInput, { passive: false });
+
+        // Game Functions
+        function spawnHeart() {
+            if (Math.random() < 0.03) { 
+                hearts.push(new Heart());
+            }
+        }
+
+        function updateGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
+            if (gameState === 'PLAYING') {
+                player.update();
+                player.draw();
+
+                spawnHeart();
+
+                for (let index = hearts.length - 1; index >= 0; index--) {
+                    let heart = hearts[index];
+                    heart.update();
+                    heart.draw();
+
+                    // Collision
+                    if (
+                        heart.y + heart.size > player.y &&
+                        heart.x > player.x &&
+                        heart.x < player.x + player.w
+                    ) {
+                        hearts.splice(index, 1);
+                        score++;
+                        createParticles(heart.x, heart.y);
+                        updateScore();
+                        
+                        if (score >= WIN_SCORE) {
+                            triggerProposal();
+                        }
+                    } else if (heart.y > canvas.height) {
+                        hearts.splice(index, 1); 
+                    }
+                }
+
+                for (let idx = particles.length - 1; idx >= 0; idx--) {
+                    let p = particles[idx];
+                    p.update();
+                    p.draw();
+                    if (p.life <= 0) particles.splice(idx, 1);
+                }
+            }
+
+            animationId = requestAnimationFrame(updateGame);
+        }
+
+        function createParticles(x, y) {
+            for(let i=0; i<8; i++) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        function updateScore() {
+            const percentage = Math.min((score / WIN_SCORE) * 100, 100);
+            loveMeter.style.width = `${percentage}%`;
+        }
+
+        function triggerProposal() {
+            gameState = 'PROPOSAL';
+            setTimeout(() => {
+                proposalScreen.classList.remove('hidden');
+                proposalScreen.classList.add('active');
+            }, 500);
+        }
+
+        function startGame() {
+            resize();
+            player = new Player();
+            hearts = [];
+            particles = [];
+            score = 0;
+            updateScore();
+            gameState = 'PLAYING';
+            
+            startScreen.classList.remove('active');
+            startScreen.classList.add('hidden');
+            
+            if(animationId) cancelAnimationFrame(animationId);
+            updateGame();
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startGame);
+
+        yesBtn.addEventListener('click', () => {
+            proposalScreen.classList.remove('active');
+            proposalScreen.classList.add('hidden');
+            celebrationScreen.classList.remove('hidden');
+            celebrationScreen.classList.add('active');
+        });
+
+        // "No" button runs away
+        function moveNoButton() {
+            const maxX = window.innerWidth - noBtn.offsetWidth - 20;
+            const maxY = window.innerHeight - noBtn.offsetHeight - 20;
+            
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+            
+            noBtn.style.position = 'fixed'; 
+            noBtn.style.left = `${Math.max(20, x)}px`;
+            noBtn.style.top = `${Math.max(20, y)}px`;
+        }
+
+        noBtn.addEventListener('mouseover', moveNoButton);
+        noBtn.addEventListener('touchstart', moveNoButton); 
+
+        // Initialize
+        resize();
+    </script>
+</body>
+</html>
